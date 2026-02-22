@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crash Game Simulation</title>
+<style>
+  body { font-family: Arial; text-align:center; background:#111; color:#fff; }
+  #game { width: 600px; height: 400px; margin: 20px auto; border: 2px solid #fff; position: relative; }
+  #multiplier { font-size: 48px; margin-top: 20px; }
+  #cashoutBtn { font-size: 24px; padding: 10px 20px; margin-top: 20px; }
+  #rocket { width: 20px; height: 40px; background: yellow; position:absolute; bottom:0; left:290px; }
+</style>
+</head>
+<body>
+
+<h1>Crash Game Simulation</h1>
+<div id="game">
+  <div id="rocket"></div>
+</div>
+<div id="multiplier">1.00x</div>
+<button id="cashoutBtn">Cash Out</button>
+
+<script>
+  let multiplier = 1.0;
+  let crashed = false;
+  let cashout = false;
+
+  const rocket = document.getElementById("rocket");
+  const multiplierText = document.getElementById("multiplier");
+  const cashoutBtn = document.getElementById("cashoutBtn");
+
+  // Random crash multiplier (can be history-influenced)
+  function getCrashMultiplier(history=[]) {
+    let base = Math.random()*9 + 1; // 1.0x to 10.0x
+    if(history.length >= 3){
+      let avg = history.slice(-3).reduce((a,b)=>a+b,0)/3;
+      if(avg < 3) base += 0.2*(10-base); // history-influenced boost
+    }
+    return Math.min(base,10);
+  }
+
+  cashoutBtn.onclick = ()=>{ cashout = true; }
+
+  function startRound(history){
+    multiplier = 1.0;
+    crashed = false;
+    cashout = false;
+    let crashAt = getCrashMultiplier(history);
+    let interval = setInterval(()=>{
+      multiplier += 0.05; // speed of increase
+      rocket.style.bottom = (multiplier*30) + "px";
+      multiplierText.innerText = multiplier.toFixed(2)+"x";
+
+      if(multiplier >= crashAt){
+        crashed = true;
+        clearInterval(interval);
+        if(cashout){
+          alert("You cashed out at " + multiplier.toFixed(2)+"x!");
+        } else {
+          alert("Crashed at " + crashAt.toFixed(2)+"x! You lost.");
+        }
+        history.push(crashAt);
+        setTimeout(()=>startRound(history),1000); // next round
+      } else if(cashout){
+        clearInterval(interval);
+        alert("You cashed out at " + multiplier.toFixed(2)+"x!");
+        history.push(multiplier);
+        setTimeout(()=>startRound(history),1000);
+      }
+    },100);
+  }
+
+  startRound([]);
+</script>
+
+</body>
+</html>
